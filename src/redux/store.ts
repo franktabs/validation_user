@@ -1,10 +1,12 @@
 import { configureStore } from "@reduxjs/toolkit";
 import electeurSlice from "./electeurSlice";
+import loadDataElecteurSlice from "./loadDataElecteurSlice";
 // ...
 
 const store = configureStore({
   reducer: {
     electeur: electeurSlice,
+    loadDataElecteurs: loadDataElecteurSlice, 
   },
 });
 

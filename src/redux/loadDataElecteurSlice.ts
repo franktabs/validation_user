@@ -2,25 +2,25 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Electeur, TypeElecteur } from "../models/Electeur";
 
 // Define a type for the slice state
-interface ElecteurState {
-  electeur?: TypeElecteur | null
+interface TypeStateSlice {
+  value: boolean;
 }
 
 // Define the initial state using that type
-const initialState: ElecteurState = {
-  electeur: null,
+const initialState: TypeStateSlice = {
+  value: true,
 };
 
-export const electeurSlice = createSlice({
-  name: "electeur",
+export const loadDataElecteurSlice = createSlice({
+  name: "load_electeur",
   // `createSlice` will infer the state type from the `initialState` argument
   initialState,
   reducers: {
-    addElecteur: (state, action: PayloadAction<typeof Electeur.clearData>) => {
-      state.electeur = action.payload;
+    loadElecteurs: (state) => {
+      state.value = true
     },
-    deleteElecteur: (state) => {
-      state.electeur = null;
+    blockLoadElecteurs: (state) => {
+      state.value = false;
     },
     // Use the PayloadAction type to declare the contents of `action.payload`
     // addElecteurByAmount: (state, action: PayloadAction<number>) => {
@@ -29,6 +29,6 @@ export const electeurSlice = createSlice({
   },
 });
 
-export const { addElecteur, deleteElecteur } = electeurSlice.actions;
+export const { loadElecteurs, blockLoadElecteurs } = loadDataElecteurSlice.actions;
 
-export default electeurSlice.reducer;
+export default loadDataElecteurSlice.reducer;

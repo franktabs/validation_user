@@ -1,5 +1,9 @@
 .MuiDataGrid-columnHeaderTitle{
     text-transform: capitalize;
+    min-width: max-content !important;
+    font-weight: bolder;
+    font-size: 1.2em;
+    transition: none;
 }
 
 .MuiDataGrid-row:hover{

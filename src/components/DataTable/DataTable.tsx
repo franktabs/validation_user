@@ -1,6 +1,10 @@
 import { DataGrid, GridColDef, GridValueGetterParams } from '@mui/x-data-grid';
-import { Electeur } from '../../models/Electeur';
+import { Electeur, TypeElecteur } from '../../models/Electeur';
 import "./dataTable.css"
+import { useCallback } from 'react';
+import { useAppDispatch } from '../../redux/hooks';
+import { addElecteur } from '../../redux/electeurSlice';
+import $ from "jquery"
 
 const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 70 },
@@ -38,26 +42,29 @@ const rows = [
 type Props = {
     columns: GridColDef[],
     rows:  (typeof Electeur.clearData)[],
-    loading:boolean
+    loading:boolean,
+    error:boolean
 }
 
-export default function DataTable({columns, rows, loading=false}:Props) {
+export default function DataTable({columns, rows, loading=false, error=false}:Props) {
+    const dispatch = useAppDispatch()
+    const handleClick = useCallback((data:TypeElecteur)=>{
+        dispatch(addElecteur(data));
+        $(".my-modal").removeClass("d-none");
+    }, [dispatch])
+    if(error) return <div>Impossible de Charger les données</div>
     return (
         <div style={{ height: 400, width: '100%' }}>
             <DataGrid
             showCellVerticalBorder={true}
             showColumnVerticalBorder={true}
             rowSpacingType="border"
+            pageSizeOptions={[20, 100]}
                 loading={loading}
                 rows={rows}
                 columns={columns}
-                initialState={{
-                    pagination: {
-                        paginationModel: { page: 0, pageSize: 5 },
-                    },
-                }}
                 editMode="cell"
-                onRowClick={(e)=>{console.log(e)}}
+                onRowClick={(e)=>{handleClick(e.row)}}
             />
         </div>
     );

@@ -3,7 +3,9 @@ import {
   Timestamp,
   addDoc,
   collection,
+  doc,
   getDocs,
+  updateDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
 
@@ -39,9 +41,9 @@ export class Electeur {
 
   constructor(public data: TypeElecteur) {}
 
-  async save(): Promise<TypeElecteur> {
+  async save(): Promise<boolean> {
     let copyData = { ...this.data };
-    if(copyData.id) delete copyData.id;
+    if (copyData.id) delete copyData.id;
     if (typeof copyData.date_naissance === "string") {
       copyData.date_naissance = new Date(copyData.date_naissance);
     }
@@ -56,19 +58,30 @@ export class Electeur {
     if (electeurRef.id) {
       this.data.id = electeurRef.id;
       console.log("Sauvegarde reussi");
+      return true
     }
-    return this.data;
+    return false
+  }
+
+  static async update(data: TypeElecteur | { valider: "OUI"|"NON"; id: string }) {
+    let copyData = {...data}
+    let electeurRef = doc(Electeur.collectionElecteur, data.id);
+    delete copyData.id;
+    let result = await updateDoc(electeurRef, copyData);
+    
   }
 
   static async getAll(): Promise<TypeElecteur[]> {
     let electeur: TypeElecteur[] = [];
     const snapshot = await getDocs(Electeur.collectionElecteur);
     snapshot.forEach((doc) => {
-      console.log('doc.data', doc.data())
+      console.log("doc.data", doc.data());
       let dataElecteur = { ...Electeur.clearData, ...doc.data() };
       dataElecteur.id = doc.id;
       if (dataElecteur.date_naissance instanceof Timestamp) {
-        dataElecteur.date_naissance = dataElecteur.date_naissance.toDate().toLocaleDateString();
+        dataElecteur.date_naissance = dataElecteur.date_naissance
+          .toDate()
+          .toLocaleDateString();
       }
       electeur.push(dataElecteur);
     });

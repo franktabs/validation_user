@@ -1,70 +1,91 @@
 import TextField from '@mui/material/TextField';
 import { useForm, SubmitHandler } from "react-hook-form"
-import { Electeur, TypeElecteur} from '../models/Electeur';
+import { Electeur, TypeElecteur } from '../models/Electeur';
 import { FormControl, Input, InputAdornment, InputLabel } from '@mui/material';
 import "./home.css"
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { GridColDef } from '@mui/x-data-grid';
 import DataTable from '../components/DataTable/DataTable';
 import StyledHome from './StyledHome';
-import { useQuery } from '@tanstack/react-query';
-import { useAppDispatch } from '../redux/hooks';
-import { reloadElecteurs } from '../redux/electeurSlice';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAppDispatch, useAppSelector } from '../redux/hooks';
+import ConfirmationModal from '../components/Modal/ConfirmationModal';
+import { blockLoadElecteurs, loadElecteurs } from '../redux/loadDataElecteurSlice';
 
 export default function Home() {
-    const dispatch = useAppDispatch()
-    const [doQueryElecteur, setDoQueryElecteur] = useState<boolean>(true);
-    const queryElecteur = useQuery({queryKey:["electeurs"],enabled:doQueryElecteur, queryFn: async ()=>{
-        let data = await Electeur.getAll();
-        if(data.length){
-            setDoQueryElecteur(false)
-            dispatch(reloadElecteurs(data))
-            return data
-        }else{
-            throw new Error("Impossible de recuperer les données")
+    const queryClient = useQueryClient()
+    const loadDataElecteurSelector = useAppSelector((state) => state.loadDataElecteurs);
+    const dispatch = useAppDispatch();
+
+    const queryElecteur = useQuery({
+        queryKey: ["electeurs"], enabled: loadDataElecteurSelector.value, queryFn: async () => {
+            let data = await Electeur.getAll();
+            if (data.length) {
+                dispatch(blockLoadElecteurs())
+                return data
+            } else {
+                throw new Error("Impossible de recuperer les données")
+            }
         }
-    }}
+    }
     );
 
 
-    const { register,reset, handleSubmit, formState: { errors } } = useForm<TypeElecteur>();
-    const handleClick : SubmitHandler<TypeElecteur> = (data)=>{
+    const { register, reset, handleSubmit, formState: { errors } } = useForm<TypeElecteur>();
+
+
+    const handleClick: SubmitHandler<TypeElecteur> = useCallback(async (data) => {
         let electeur = new Electeur(data);
-        electeur.save()
-    }
-    const columns = useMemo(()=>{
+        if ((await electeur.save())) {
+            queryClient.invalidateQueries({ queryKey: ["electeurs"] });
+            dispatch(loadElecteurs());
+            reset();
+        }
+
+    }, [dispatch, queryClient, reset])
+    const columns = useMemo(() => {
         let col: GridColDef[] = []
         let attr: keyof TypeElecteur
-        for(attr in Electeur.clearData){
-            if(attr!=="id"){
-                if (attr === "nom" || attr === "prenom" ) {
-                    col.push({ field: attr, headerName: attr, maxWidth: 100, flex:1 })
+        for (attr in Electeur.clearData) {
+            if (attr !== "id") {
+                if (attr === "nom" || attr === "prenom") {
+                    col.push({ field: attr, headerName: attr, minWidth: 180 })
                 }
-                else if (attr === "date_naissance"){
-                    col.push({ field: attr, headerName: "Date de Naissance", minWidth: 200 })
+                else if (attr === "date_naissance") {
+                    col.push({ field: attr, headerName: "Date de Naissance", minWidth: 150 })
                 }
-                else{
+                else if (attr === "bureau_vote") {
+                    col.push({ field: attr, headerName: "Bureau de Vote", minWidth: 150 })
+                }
+                else {
                     col.push({ field: attr, headerName: attr });
 
                 }
-            } 
-             
+            }
+
         }
         return col;
-    },[])
+    }, [])
 
-    
-    console.log(queryElecteur.data);
+
     return (
-        
+
         <>
+            <ConfirmationModal />
             <StyledHome className=' d-flex p-2 p-md-5'>
                 <div className=' p-2 p-md-3 my-form'>
                     <form>
                         <div className=' d-flex flex-column gap-3'>
                             <TextField error={!!errors.nom} helperText={errors.nom?.message ?? ""} size='small' id="outlined-basic" label="Nom" variant="outlined" {...register("nom", { required: "Ce champs est requis" })} required />
                             <TextField size='small' id="outlined-basic" label="Prenom" variant="outlined" {...register("prenom")} />
-                            <TextField error={!!errors.date_naissance} helperText={errors.date_naissance?.message ?? ""} size='small' type="date" id="outlined-basic" variant="outlined" {...register("date_naissance", { required: "Ce champs est requis" })} required />
+
+                            <div>
+                                <InputLabel htmlFor="standard-adornment-date" >
+                                    Date de naissance
+                                </InputLabel>
+                                <TextField error={!!errors.date_naissance} fullWidth={true} helperText={errors.date_naissance?.message ?? ""} size='small' type="date" id="standard-adornment-date" variant="outlined" {...register("date_naissance", { required: "Ce champs est requis" })} required />
+
+                            </div>
                             <div className=' d-flex gap-3'>
                                 <InputLabel htmlFor="standard-adornment-amount">Sexe</InputLabel>
                                 <div className="form-check">
@@ -102,7 +123,7 @@ export default function Home() {
                     </form>
                 </div>
                 <div>
-                    <DataTable columns={columns} rows={queryElecteur.data??[]} loading={queryElecteur.status==="loading"} />
+                    <DataTable columns={columns} rows={queryElecteur.data ?? []} loading={queryElecteur.status === "loading"} error={queryElecteur.status === "error"} />
                 </div>
             </StyledHome>
         </>
