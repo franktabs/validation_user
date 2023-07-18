@@ -24,8 +24,8 @@ export class Electeur {
   constructor(public data: TypeElecteur) {}
 }
 
-export const dataTest: Electeur[] = [
-  new Electeur({
+export const dataTest: TypeElecteur[] = [
+  {
     ...Electeur.clearData,
     nom: "frank",
     date_naissance: new Date(),
@@ -33,8 +33,8 @@ export const dataTest: Electeur[] = [
     residence: "Yaoundé",
     bureau_vote: "Yaoundé-Manguier",
     id: 1,
-  }),
-  new Electeur({
+  },
+  {
     ...Electeur.clearData,
     nom: "Junior",
     date_naissance: new Date(),
@@ -43,8 +43,8 @@ export const dataTest: Electeur[] = [
     bureau_vote: "Yaoundé-Manguier",
     sexe:"F",
     id: 2,
-  }),
-  new Electeur({
+  },
+  {
     ...Electeur.clearData,
     nom: "Arthur",
     date_naissance: new Date(),
@@ -52,8 +52,8 @@ export const dataTest: Electeur[] = [
     residence: "Yaoundé",
     bureau_vote: "Yaoundé-Manguier",
     id: 3,
-  }),
-  new Electeur({
+  },
+  {
     ...Electeur.clearData,
     nom: "Jean",
     date_naissance: new Date(),
@@ -61,8 +61,8 @@ export const dataTest: Electeur[] = [
     residence: "Yaoundé",
     bureau_vote: "Yaoundé-Manguier",
     id: 4,
-  }),
-  new Electeur({
+  },
+  {
     ...Electeur.clearData,
     nom: "Rosie",
     date_naissance: new Date(),
@@ -70,8 +70,8 @@ export const dataTest: Electeur[] = [
     residence: "Yaoundé",
     bureau_vote: "Yaoundé-Manguier",
     id: 5,
-  }),
-  new Electeur({
+  },
+  {
     ...Electeur.clearData,
     nom: "André",
     date_naissance: new Date(),
@@ -79,8 +79,8 @@ export const dataTest: Electeur[] = [
     residence: "Yaoundé",
     bureau_vote: "Yaoundé-Manguier",
     id: 6,
-  }),
-  new Electeur({
+  },
+  {
     ...Electeur.clearData,
     nom: "Estelle",
     date_naissance: new Date(),
@@ -88,5 +88,5 @@ export const dataTest: Electeur[] = [
     residence: "Yaoundé",
     bureau_vote: "Yaoundé-Manguier",
     id: 7,
-  }),
+  },
 ];

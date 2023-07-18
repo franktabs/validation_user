@@ -36,7 +36,7 @@ const rows = [
 
 type Props = {
     columns: GridColDef[],
-    rows: typeof Electeur.clearData
+    rows:  (typeof Electeur.clearData)[]
 }
 
 export default function DataTable({columns, rows}:Props) {

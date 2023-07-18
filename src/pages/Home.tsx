@@ -1,17 +1,27 @@
 import TextField from '@mui/material/TextField';
 import { useForm, SubmitHandler } from "react-hook-form"
-import { Electeur } from '../models/Electeur';
+import { Electeur, TypeElecteur, dataTest} from '../models/Electeur';
 import { FormControl, Input, InputAdornment, InputLabel } from '@mui/material';
 import "./home.css"
+import { useMemo } from 'react';
+import { GridColDef } from '@mui/x-data-grid';
+import DataTable from '../components/DataTable';
 
 export default function Home() {
 
-    const { register, handleSubmit, formState: { errors } } = useForm<Electeur>();
-    const handleClick : SubmitHandler<Electeur> = (data)=>{
+    const { register, handleSubmit, formState: { errors } } = useForm<TypeElecteur>();
+    const handleClick : SubmitHandler<TypeElecteur> = (data)=>{
         console.log("données=>", data);
     }
+    const columns = useMemo(()=>{
+        let col: GridColDef[] = []
+        for(let attr in Electeur.clearData){
+            col.push({field:attr, headerName:attr})
+        }
+        return col;
+    },[])
     return (
-        <div>
+        <div className=' d-flex'>
             <div className=' p-2 p-md-3 my-form'>
                 <form>
                     <div className=' d-flex flex-column gap-3'>
@@ -48,6 +58,9 @@ export default function Home() {
                         <button className=' btn btn-primary' onClick={handleSubmit(handleClick)} > Enregistrer </button>
                     </div>
                 </form>
+            </div>
+            <div>
+                <DataTable columns={columns} rows={dataTest} />
             </div>
         </div>
     )
