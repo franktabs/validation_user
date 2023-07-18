@@ -1,14 +1,31 @@
 import TextField from '@mui/material/TextField';
 import { useForm, SubmitHandler } from "react-hook-form"
-import { Electeur, TypeElecteur, dataTest} from '../models/Electeur';
+import { Electeur, TypeElecteur} from '../models/Electeur';
 import { FormControl, Input, InputAdornment, InputLabel } from '@mui/material';
 import "./home.css"
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { GridColDef } from '@mui/x-data-grid';
-import DataTable from '../components/DataTable';
+import DataTable from '../components/DataTable/DataTable';
 import StyledHome from './StyledHome';
+import { useQuery } from '@tanstack/react-query';
+import { useAppDispatch } from '../redux/hooks';
+import { reloadElecteurs } from '../redux/electeurSlice';
 
 export default function Home() {
+    const dispatch = useAppDispatch()
+    const [doQueryElecteur, setDoQueryElecteur] = useState<boolean>(true);
+    const queryElecteur = useQuery({queryKey:["electeurs"],enabled:doQueryElecteur, queryFn: async ()=>{
+        let data = await Electeur.getAll();
+        if(data.length){
+            setDoQueryElecteur(false)
+            dispatch(reloadElecteurs(data))
+            return data
+        }else{
+            throw new Error("Impossible de recuperer les données")
+        }
+    }}
+    );
+
 
     const { register,reset, handleSubmit, formState: { errors } } = useForm<TypeElecteur>();
     const handleClick : SubmitHandler<TypeElecteur> = (data)=>{
@@ -17,12 +34,27 @@ export default function Home() {
     }
     const columns = useMemo(()=>{
         let col: GridColDef[] = []
-        for(let attr in Electeur.clearData){
-            col.push({field:attr, headerName:attr})
+        let attr: keyof TypeElecteur
+        for(attr in Electeur.clearData){
+            if(attr!=="id"){
+                if (attr === "nom" || attr === "prenom" ) {
+                    col.push({ field: attr, headerName: attr, maxWidth: 100, flex:1 })
+                }
+                else if (attr === "date_naissance"){
+                    col.push({ field: attr, headerName: "Date de Naissance", minWidth: 200 })
+                }
+                else{
+                    col.push({ field: attr, headerName: attr });
+
+                }
+            } 
+             
         }
         return col;
     },[])
 
+    
+    console.log(queryElecteur.data);
     return (
         
         <>
@@ -70,7 +102,7 @@ export default function Home() {
                     </form>
                 </div>
                 <div>
-                    <DataTable columns={columns} rows={dataTest} />
+                    <DataTable columns={columns} rows={queryElecteur.data??[]} loading={queryElecteur.status==="loading"} />
                 </div>
             </StyledHome>
         </>

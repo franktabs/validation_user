@@ -1,0 +1,7 @@
+.MuiDataGrid-columnHeaderTitle{
+    text-transform: capitalize;
+}
+
+.MuiDataGrid-row:hover{
+    cursor: pointer;
+}

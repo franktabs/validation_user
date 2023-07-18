@@ -1,12 +1,18 @@
-import { CollectionReference, Timestamp, addDoc, collection } from "firebase/firestore";
+import {
+  CollectionReference,
+  Timestamp,
+  addDoc,
+  collection,
+  getDocs,
+} from "firebase/firestore";
 import { db } from "../firebase";
 
 export interface TypeElecteur {
-  id: number;
+  id?: string;
   nom: string;
   prenom?: string;
   sexe: "M" | "F";
-  date_naissance: Date | string |Timestamp;
+  date_naissance: Date | string | Timestamp;
   tel: number;
   residence?: string;
   bureau_vote?: string;
@@ -14,14 +20,13 @@ export interface TypeElecteur {
 }
 
 export class Electeur {
-  collectionElecteur = collection(
+  static collectionElecteur = collection(
     db,
     "electeur"
   ) as CollectionReference<TypeElecteur>;
 
-
   static clearData: TypeElecteur = {
-    id: -1,
+    id: "-1",
     nom: "",
     prenom: "",
     sexe: "M",
@@ -34,89 +39,39 @@ export class Electeur {
 
   constructor(public data: TypeElecteur) {}
 
-  async save() {
+  async save(): Promise<TypeElecteur> {
     let copyData = { ...this.data };
+    if(copyData.id) delete copyData.id;
     if (typeof copyData.date_naissance === "string") {
       copyData.date_naissance = new Date(copyData.date_naissance);
     }
     if (copyData.date_naissance instanceof Date) {
       copyData.date_naissance = Timestamp.fromDate(copyData.date_naissance);
     }
-    try {
-      let electeurRef = await addDoc<TypeElecteur>(
-        this.collectionElecteur,
-        copyData
-      );
-    } catch (e) {
-      console.log("Une erreur s'est produite ");
+
+    let electeurRef = await addDoc<TypeElecteur>(
+      Electeur.collectionElecteur,
+      copyData
+    );
+    if (electeurRef.id) {
+      this.data.id = electeurRef.id;
+      console.log("Sauvegarde reussi");
     }
+    return this.data;
+  }
+
+  static async getAll(): Promise<TypeElecteur[]> {
+    let electeur: TypeElecteur[] = [];
+    const snapshot = await getDocs(Electeur.collectionElecteur);
+    snapshot.forEach((doc) => {
+      console.log('doc.data', doc.data())
+      let dataElecteur = { ...Electeur.clearData, ...doc.data() };
+      dataElecteur.id = doc.id;
+      if (dataElecteur.date_naissance instanceof Timestamp) {
+        dataElecteur.date_naissance = dataElecteur.date_naissance.toDate().toLocaleDateString();
+      }
+      electeur.push(dataElecteur);
+    });
+    return electeur;
   }
 }
-
-export const dataTest: TypeElecteur[] = [
-  {
-    ...Electeur.clearData,
-    nom: "frank",
-    date_naissance: new Date().toLocaleDateString(),
-    tel: 645342312,
-    residence: "Yaoundé",
-    bureau_vote: "Yaoundé-Manguier",
-    id: 1,
-  },
-  {
-    ...Electeur.clearData,
-    nom: "Junior",
-    date_naissance: new Date().toLocaleDateString(),
-    tel: 645342312,
-    residence: "Yaoundé",
-    bureau_vote: "Yaoundé-Manguier",
-    sexe: "F",
-    id: 2,
-  },
-  {
-    ...Electeur.clearData,
-    nom: "Arthur",
-    date_naissance: new Date().toLocaleDateString(),
-    tel: 645342312,
-    residence: "Yaoundé",
-    bureau_vote: "Yaoundé-Manguier",
-    valider: "OUI",
-    id: 3,
-  },
-  {
-    ...Electeur.clearData,
-    nom: "Jean",
-    date_naissance: new Date().toLocaleDateString(),
-    tel: 645342312,
-    residence: "Yaoundé",
-    bureau_vote: "Yaoundé-Manguier",
-    id: 4,
-  },
-  {
-    ...Electeur.clearData,
-    nom: "Rosie",
-    date_naissance: new Date().toLocaleDateString(),
-    tel: 645342312,
-    residence: "Yaoundé",
-    bureau_vote: "Yaoundé-Manguier",
-    id: 5,
-  },
-  {
-    ...Electeur.clearData,
-    nom: "André",
-    date_naissance: new Date().toLocaleDateString(),
-    tel: 645342312,
-    residence: "Yaoundé",
-    bureau_vote: "Yaoundé-Manguier",
-    id: 6,
-  },
-  {
-    ...Electeur.clearData,
-    nom: "Estelle",
-    date_naissance: new Date().toLocaleDateString(),
-    tel: 645342312,
-    residence: "Yaoundé",
-    bureau_vote: "Yaoundé-Manguier",
-    id: 7,
-  },
-];

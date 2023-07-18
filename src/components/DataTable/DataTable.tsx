@@ -1,5 +1,6 @@
 import { DataGrid, GridColDef, GridValueGetterParams } from '@mui/x-data-grid';
-import { Electeur } from '../models/Electeur';
+import { Electeur } from '../../models/Electeur';
+import "./dataTable.css"
 
 const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 70 },
@@ -36,13 +37,18 @@ const rows = [
 
 type Props = {
     columns: GridColDef[],
-    rows:  (typeof Electeur.clearData)[]
+    rows:  (typeof Electeur.clearData)[],
+    loading:boolean
 }
 
-export default function DataTable({columns, rows}:Props) {
+export default function DataTable({columns, rows, loading=false}:Props) {
     return (
         <div style={{ height: 400, width: '100%' }}>
             <DataGrid
+            showCellVerticalBorder={true}
+            showColumnVerticalBorder={true}
+            rowSpacingType="border"
+                loading={loading}
                 rows={rows}
                 columns={columns}
                 initialState={{
@@ -50,7 +56,6 @@ export default function DataTable({columns, rows}:Props) {
                         paginationModel: { page: 0, pageSize: 5 },
                     },
                 }}
-                pageSizeOptions={[5, 10]}
                 editMode="cell"
                 onRowClick={(e)=>{console.log(e)}}
             />
