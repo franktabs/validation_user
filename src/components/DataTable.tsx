@@ -51,7 +51,8 @@ export default function DataTable({columns, rows}:Props) {
                     },
                 }}
                 pageSizeOptions={[5, 10]}
-                checkboxSelection
+                editMode="cell"
+                onRowClick={(e)=>{console.log(e)}}
             />
         </div>
     );
