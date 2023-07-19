@@ -6,6 +6,10 @@
     transition: none;
 }
 
+.MuiDataGrid-row{
+    transition: none;
+}
+
 .MuiDataGrid-row:hover{
     cursor: pointer;
 }

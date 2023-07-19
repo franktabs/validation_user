@@ -13,6 +13,8 @@ import ConfirmationModal from '../components/Modal/ConfirmationModal';
 import { blockLoadElecteurs, loadElecteurs } from '../redux/loadDataElecteurSlice';
 
 export default function Home() {
+
+
     const queryClient = useQueryClient()
     const loadDataElecteurSelector = useAppSelector((state) => state.loadDataElecteurs);
     const dispatch = useAppDispatch();
@@ -68,10 +70,13 @@ export default function Home() {
     }, [])
 
 
+
+
     return (
 
         <>
             <ConfirmationModal />
+            <h1 className=' text-center mt-2' > ENREGISTREMENT DU PERSONNEL</h1>
             <StyledHome className=' d-flex p-2 p-md-5'>
                 <div className=' p-2 p-md-3 my-form'>
                     <form>
