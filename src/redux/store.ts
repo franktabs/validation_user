@@ -2,6 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import electeurSlice from "./electeurSlice";
 import loadDataElecteurSlice from "./loadDataElecteurSlice";
 import connectedSlice from "./connectedSlice";
+import utilisateurSlice from "./utilisateurSlice";
 // ...
 
 const store = configureStore({
@@ -9,6 +10,7 @@ const store = configureStore({
     electeur: electeurSlice,
     loadDataElecteurs: loadDataElecteurSlice,
     connectedAdmin: connectedSlice,
+    utilisateur:utilisateurSlice
   },
 });
 

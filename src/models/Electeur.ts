@@ -3,6 +3,7 @@ import {
   Timestamp,
   addDoc,
   collection,
+  deleteDoc,
   doc,
   getDocs,
   updateDoc,
@@ -19,6 +20,9 @@ export interface TypeElecteur {
   residence?: string;
   bureau_vote?: string;
   valider: "OUI" | "NON";
+  adresse1?:string;
+  adresse2?:string;
+  leader?:string;
 }
 
 export class Electeur {
@@ -32,10 +36,13 @@ export class Electeur {
     nom: "",
     prenom: "",
     sexe: "M",
-    date_naissance: "",
+    date_naissance: "01/01/2000",
     tel: 0,
     residence: "",
+    adresse1:"",
+    adresse2:"",
     bureau_vote: "",
+    leader:"",
     valider: "NON",
   };
 
@@ -75,7 +82,6 @@ export class Electeur {
     let electeur: TypeElecteur[] = [];
     const snapshot = await getDocs(Electeur.collectionElecteur);
     snapshot.forEach((doc) => {
-      console.log("doc.data", doc.data());
       let dataElecteur = { ...Electeur.clearData, ...doc.data() };
       dataElecteur.id = doc.id;
       if (dataElecteur.date_naissance instanceof Timestamp) {
@@ -86,5 +92,11 @@ export class Electeur {
       electeur.push(dataElecteur);
     });
     return electeur;
+  }
+
+  static async delete (data:TypeElecteur){
+    if(data.id){
+      await deleteDoc(doc(Electeur.collectionElecteur, data.id))
+    }
   }
 }

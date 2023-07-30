@@ -12,7 +12,7 @@ const initialState: TypeStateSlice = {
 };
 
 export const connectedSlice = createSlice({
-  name: "load_electeur",
+  name: "connected_electeur",
   // `createSlice` will infer the state type from the `initialState` argument
   initialState,
   reducers: {

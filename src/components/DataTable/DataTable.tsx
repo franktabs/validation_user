@@ -5,6 +5,7 @@ import { useCallback } from 'react';
 import { useAppDispatch } from '../../redux/hooks';
 import { addElecteur } from '../../redux/electeurSlice';
 import $ from "jquery"
+import { UseFormReset } from 'react-hook-form';
 
 const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 70 },
@@ -43,15 +44,16 @@ type Props = {
     columns: GridColDef[],
     rows:  (typeof Electeur.clearData)[],
     loading:boolean,
-    error:boolean
+    error:boolean,
+    reset:UseFormReset<TypeElecteur>
 }
 
-export default function DataTable({columns, rows, loading=false, error=false}:Props) {
+export default function DataTable({columns, rows, loading=false, error=false, reset}:Props) {
     const dispatch = useAppDispatch()
     const handleClick = useCallback((data:TypeElecteur)=>{
         dispatch(addElecteur(data));
         $(".my-modal").removeClass("d-none");
-    }, [dispatch])
+    }, [dispatch, reset])
     if(error) return <div>Impossible de Charger les données</div>
     return (
         <div style={{ height: 400, width: '100%' }}>
@@ -64,7 +66,7 @@ export default function DataTable({columns, rows, loading=false, error=false}:Pr
                 rows={rows}
                 columns={columns}
                 editMode="cell"
-                onRowClick={(e)=>{handleClick(e.row)}}
+                onRowClick={(e)=>{reset(Electeur.clearData); handleClick(e.row)}}
             />
         </div>
     );

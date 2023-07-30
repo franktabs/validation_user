@@ -3,7 +3,7 @@ import { useForm, SubmitHandler } from "react-hook-form"
 import { Electeur, TypeElecteur } from '../models/Electeur';
 import { FormControl, Input, InputAdornment, InputLabel } from '@mui/material';
 import "./home.css"
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, MouseEvent } from 'react';
 import { GridColDef } from '@mui/x-data-grid';
 import DataTable from '../components/DataTable/DataTable';
 import StyledHome from './StyledHome';
@@ -11,12 +11,18 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import ConfirmationModal from '../components/Modal/ConfirmationModal';
 import { blockLoadElecteurs, loadElecteurs } from '../redux/loadDataElecteurSlice';
+import $ from "jquery"
+import { loadFormData } from '../redux/electeurSlice';
+import UserModal from '../components/Modal/UserModal';
+import { gererUtilisateur } from '../redux/utilisateurSlice';
 
 export default function Home() {
 
 
+    const userAuth = useAppSelector((state) => state.utilisateur)
     const queryClient = useQueryClient()
     const loadDataElecteurSelector = useAppSelector((state) => state.loadDataElecteurs);
+    const electeurSelector = useAppSelector((state) => state.electeur);
     const dispatch = useAppDispatch();
 
     const queryElecteur = useQuery({
@@ -33,16 +39,37 @@ export default function Home() {
     );
 
 
-    const { register, reset, handleSubmit, formState: { errors } } = useForm<TypeElecteur>();
+    const { register, getValues, reset, handleSubmit, formState: { errors } } = useForm<TypeElecteur>({ defaultValues: Electeur.clearData });
 
+
+    useEffect(() => {
+        if (electeurSelector.putForm && electeurSelector.electeur) {
+            dispatch(loadFormData(false))
+            console.log("affichage de l'electeur", electeurSelector.electeur)
+            reset(electeurSelector.electeur);
+        }
+    }, [electeurSelector.putForm, dispatch, electeurSelector.electeur])
+
+
+    console.log("ici =>", getValues())
 
     const handleClick: SubmitHandler<TypeElecteur> = useCallback(async (data) => {
         let electeur = new Electeur(data);
-        if ((await electeur.save())) {
+        $(".my-loader").removeClass("d-none")
+
+        if (data.id && data.id != "-1") {
+            await Electeur.update(data);
             queryClient.invalidateQueries({ queryKey: ["electeurs"] });
             dispatch(loadElecteurs());
-            reset();
+            reset(Electeur.clearData);
         }
+        else if ((await electeur.save())) {
+            queryClient.invalidateQueries({ queryKey: ["electeurs"] });
+            dispatch(loadElecteurs());
+            reset(Electeur.clearData);
+        }
+        $(".my-loader").addClass("d-none")
+
 
     }, [dispatch, queryClient, reset])
     const columns = useMemo(() => {
@@ -54,10 +81,13 @@ export default function Home() {
                     col.push({ field: attr, headerName: attr, minWidth: 180 })
                 }
                 else if (attr === "date_naissance") {
-                    col.push({ field: attr, headerName: "Date de Naissance", minWidth: 150 })
+                    col.push({ field: attr, headerName: "Date de Naissance", minWidth: 180 })
                 }
                 else if (attr === "bureau_vote") {
                     col.push({ field: attr, headerName: "Bureau de Vote", minWidth: 150 })
+                }
+                else if (attr === "valider") {
+                    col.push({ field: attr, headerName: "A Voté", minWidth: 150 })
                 }
                 else {
                     col.push({ field: attr, headerName: attr });
@@ -69,38 +99,78 @@ export default function Home() {
         return col;
     }, [])
 
+    const focusTextField = useCallback((name: keyof TypeElecteur) => {
+        if (getValues(name)) {
+            return { focused: true }
+        }
 
+    }, [getValues]);
 
+    const checkedRadio = useCallback((value: TypeElecteur["sexe"]) => {
+        if (getValues("sexe") == value) {
+            return { defaultChecked: true }
+        } else {
+            return { defaultChecked: false }
+        }
 
+    }, [getValues]);
+
+    const handlePassword = useCallback((value: MouseEvent) => {
+        $(".user-modal").removeClass("d-none");
+        dispatch(gererUtilisateur({...userAuth, gerer:true}));
+        console.log("affiche usemodal")
+    }, [dispatch, userAuth])
+
+    const formatDate = useCallback(() => {
+        let date = getValues("date_naissance");
+        if (typeof date == "string") {
+            let tabDate = date.split("/");
+            if (tabDate[2]) {
+                let jour = tabDate[0];
+                console.log('jour', jour)
+                let mois = tabDate[1];
+                console.log('mois', mois)
+                let annee = tabDate[2];
+                console.log('annee', annee)
+                let formatage = annee + "-" + mois + "-" + jour;
+                console.log("la date est ", formatage)
+                return { value: formatage }
+            }
+
+        }
+    }, [getValues])
+
+    formatDate()
     return (
 
         <>
             <ConfirmationModal />
+            <UserModal />
             <h1 className=' text-center mt-2' > ENREGISTREMENT DU PERSONNEL</h1>
             <StyledHome className=' d-flex p-2 p-md-5'>
                 <div className=' p-2 p-md-3 my-form'>
                     <form>
                         <div className=' d-flex flex-column gap-3'>
-                            <TextField error={!!errors.nom} helperText={errors.nom?.message ?? ""} size='small' id="outlined-basic" label="Nom" variant="outlined" {...register("nom", { required: "Ce champs est requis" })} required />
-                            <TextField size='small' id="outlined-basic" label="Prenom" variant="outlined" {...register("prenom")} />
+                            <TextField error={!!errors.nom} helperText={errors.nom?.message ?? ""} size='small' label="Nom" variant="outlined" defaultValue={"frank"} {...register("nom", { required: "Ce champs est requis" })} required {...focusTextField("nom")} />
+                            <TextField size='small' label="Prenom" variant="outlined" {...register("prenom")} {...focusTextField("prenom")} />
 
                             <div>
                                 <InputLabel htmlFor="standard-adornment-date" >
                                     Date de naissance
                                 </InputLabel>
-                                <TextField error={!!errors.date_naissance} fullWidth={true} helperText={errors.date_naissance?.message ?? ""} size='small' type="date" id="standard-adornment-date" variant="outlined" {...register("date_naissance", { required: "Ce champs est requis" })} required />
+                                <TextField error={!!errors.date_naissance} fullWidth={true} {...formatDate()} helperText={errors.date_naissance?.message ?? ""} size='small' type="date" id="standard-adornment-date" variant="outlined" {...register("date_naissance", { required: "Ce champs est requis" })}  {...focusTextField("date_naissance")} required />
 
                             </div>
                             <div className=' d-flex gap-3'>
                                 <InputLabel htmlFor="standard-adornment-amount">Sexe</InputLabel>
                                 <div className="form-check">
-                                    <input className="form-check-input" type="radio" {...register("sexe")} id="flexRadioDefault1" value={"M"} defaultChecked />
+                                    <input className="form-check-input" type="radio" {...register("sexe", { required: "Ce Champs est requis" })} id="flexRadioDefault1" value={"M"} {...checkedRadio("M")} />
                                     <label className="form-check-label" htmlFor="flexRadioDefault1">
                                         Masculin
                                     </label>
                                 </div>
                                 <div className="form-check">
-                                    <input className="form-check-input" type="radio" {...register("sexe")} id="flexRadioDefault2" value={"F"} />
+                                    <input className="form-check-input" type="radio" {...register("sexe", { required: "Ce Champs est requis" })} id="flexRadioDefault2" value={"F"} {...checkedRadio("F")} />
                                     <label className="form-check-label" htmlFor="flexRadioDefault2">
                                         Feminin
                                     </label>
@@ -117,18 +187,28 @@ export default function Home() {
                                     startAdornment={<InputAdornment position="start">+ 237</InputAdornment>}
                                 />
                             </FormControl>
-                            <TextField size='small' id="outlined-basic" label="Residence" variant="outlined" {...register("residence")} />
-                            <TextField size='small' id="outlined-basic" label="bureau de vote" variant="outlined" {...register("bureau_vote")} />
+                            <TextField size='small' label="Residence" variant="outlined" {...register("residence")}  {...focusTextField("residence")} />
+                            <TextField size='small' label="Adresse 1" variant="outlined" {...register("adresse1")}  {...focusTextField("adresse1")} />
+                            <TextField size='small' label="Adresse 2" variant="outlined" {...register("adresse2")} {...focusTextField("adresse2")} />
+                            <TextField size='small' label="Bureau de Vote" variant="outlined" {...register("bureau_vote")} {...focusTextField("bureau_vote")} />
+                            <TextField size='small' label="Leader" variant="outlined" {...register("leader")} {...focusTextField("leader")} />
 
                         </div>
                         <div className=' pt-3 d-flex justify-content-end gap-2'>
                             <button className=' btn btn-success' onClick={handleSubmit(handleClick)} > Enregistrer </button>
-                            <button className=' btn btn-dark' onClick={() => { reset() }} > Reset </button>
+                            <button className=' btn btn-dark' onClick={() => { reset(Electeur.clearData) }} > Reset </button>
                         </div>
                     </form>
                 </div>
                 <div>
-                    <DataTable columns={columns} rows={queryElecteur.data ?? []} loading={queryElecteur.status === "loading"} error={queryElecteur.status === "error"} />
+                    {
+                        userAuth.value.type === "admin"  ?
+                            <div className=' p-4'>
+                                <button className='btn btn-primary' onClick={handlePassword} >Gestion Mots de passes</button>
+                            </div> : null
+                    }
+
+                    <DataTable columns={columns} rows={queryElecteur.data ?? []} loading={queryElecteur.status === "loading"} error={queryElecteur.status === "error"} reset={reset} />
                 </div>
             </StyledHome>
         </>

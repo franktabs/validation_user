@@ -10,7 +10,7 @@ export const StyledConfirmationModal = styled.div`
     justify-content: center;
     align-items: center;
     background-color: #00000052;
-    z-index: 99;
+    z-index: 2;
 
     & .btn-close{
         position: absolute;
