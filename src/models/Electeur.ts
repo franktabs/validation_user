@@ -6,6 +6,8 @@ import {
   deleteDoc,
   doc,
   getDocs,
+  limit,
+  query,
   updateDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
@@ -80,7 +82,9 @@ export class Electeur {
 
   static async getAll(): Promise<TypeElecteur[]> {
     let electeur: TypeElecteur[] = [];
-    const snapshot = await getDocs(Electeur.collectionElecteur);
+    // const snapshot = await getDocs(Electeur.collectionElecteur);
+    const q = query(Electeur.collectionElecteur, limit(25));
+    const snapshot = await getDocs(q);
     snapshot.forEach((doc) => {
       let dataElecteur = { ...Electeur.clearData, ...doc.data() };
       dataElecteur.id = doc.id;

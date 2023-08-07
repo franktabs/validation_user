@@ -1,3 +1,5 @@
 {
-    "commentTranslate.hover.enabled": false
+    "commentTranslate.hover.enabled": false,
+    "editor.fontFamily": "'JetBrains Mono Regular' ,Consolas, 'Courier New', monospace",
+    "editor.codeLensFontFamily": ""
 }

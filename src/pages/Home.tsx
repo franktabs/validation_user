@@ -15,6 +15,20 @@ import $ from "jquery"
 import { loadFormData } from '../redux/electeurSlice';
 import UserModal from '../components/Modal/UserModal';
 import { gererUtilisateur } from '../redux/utilisateurSlice';
+import { PDFDownloadLink, PDFViewer } from '@react-pdf/renderer';
+import { MyPDF } from '../components/pdf/MyPdf';
+import { MyDocument } from '../components/pdf/MyDocument';
+import styled from 'styled-components';
+
+
+const BtnPdf= styled.div`
+    a {
+        display: block;
+        text-decoration: none;
+        color: white;
+    }
+`
+
 
 export default function Home() {
 
@@ -117,7 +131,7 @@ export default function Home() {
 
     const handlePassword = useCallback((value: MouseEvent) => {
         $(".user-modal").removeClass("d-none");
-        dispatch(gererUtilisateur({...userAuth, gerer:true}));
+        dispatch(gererUtilisateur({ ...userAuth, gerer: true }));
         console.log("affiche usemodal")
     }, [dispatch, userAuth])
 
@@ -202,9 +216,16 @@ export default function Home() {
                 </div>
                 <div>
                     {
-                        userAuth.value.type === "admin"  ?
-                            <div className=' p-4'>
+                        userAuth.value.type === "admin" ?
+                            <div className=' p-4 d-flex justify-content-between flex-wrap gap-3'>
                                 <button className='btn btn-primary' onClick={handlePassword} >Gestion Mots de passes</button>
+                                <BtnPdf className='btn btn-dark'>
+                                    <PDFDownloadLink document={<MyDocument nameCol={columns as any} rows={queryElecteur.data ?? []} />} fileName="tableau.pdf">
+                                        {({ blob, url, loading, error }) =>
+                                            loading ? 'Chargement du PDF...' : 'Télécharger le PDF'
+                                        }
+                                    </PDFDownloadLink>
+                                </BtnPdf>
                             </div> : null
                     }
 

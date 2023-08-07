@@ -42,31 +42,32 @@ const rows = [
 
 type Props = {
     columns: GridColDef[],
-    rows:  (typeof Electeur.clearData)[],
-    loading:boolean,
-    error:boolean,
-    reset:UseFormReset<TypeElecteur>
+    rows: (typeof Electeur.clearData)[],
+    loading: boolean,
+    error: boolean,
+    reset: UseFormReset<TypeElecteur>
 }
 
-export default function DataTable({columns, rows, loading=false, error=false, reset}:Props) {
+export default function DataTable({ columns, rows, loading = false, error = false, reset }: Props) {
     const dispatch = useAppDispatch()
-    const handleClick = useCallback((data:TypeElecteur)=>{
+    const handleClick = useCallback((data: TypeElecteur) => {
         dispatch(addElecteur(data));
         $(".my-modal").removeClass("d-none");
-    }, [dispatch, reset])
-    if(error) return <div>Impossible de Charger les données</div>
+    }, [dispatch])
+    if (error) return <div>Impossible de Charger les données</div>
     return (
         <div style={{ height: 400, width: '100%' }}>
             <DataGrid
-            showCellVerticalBorder={true}
-            showColumnVerticalBorder={true}
-            rowSpacingType="border"
-            pageSizeOptions={[20, 100]}
+                showCellVerticalBorder={true}
+                showColumnVerticalBorder={true}
+                rowSpacingType="border"
+                
+                pageSizeOptions={[100, 80, 40, 20, 10]}
                 loading={loading}
                 rows={rows}
                 columns={columns}
                 editMode="cell"
-                onRowClick={(e)=>{reset(Electeur.clearData); handleClick(e.row)}}
+                onRowClick={(e) => { reset(Electeur.clearData); handleClick(e.row) }}
             />
         </div>
     );
