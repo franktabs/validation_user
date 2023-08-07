@@ -204,3 +204,8 @@ body {
 .my-loader{
   z-index: 100 !important;
 }
+
+.css-yrdy0g-MuiDataGrid-columnHeaderRow{
+  background-color: rgb(180, 180, 180);
+  font-weight: bold;
+}

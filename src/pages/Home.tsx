@@ -215,6 +215,9 @@ export default function Home() {
                     </form>
                 </div>
                 <div>
+                    <p className='fs-2 text-center'>
+                        Nombre total d'électeurs enregistrés: {queryElecteur.data?.length || "aucun trouvé"}
+                    </p>
                     {
                         userAuth.value.type === "admin" ?
                             <div className=' p-4 d-flex justify-content-between flex-wrap gap-3'>

@@ -82,9 +82,9 @@ export class Electeur {
 
   static async getAll(): Promise<TypeElecteur[]> {
     let electeur: TypeElecteur[] = [];
-    // const snapshot = await getDocs(Electeur.collectionElecteur);
-    const q = query(Electeur.collectionElecteur, limit(25));
-    const snapshot = await getDocs(q);
+    const snapshot = await getDocs(Electeur.collectionElecteur);
+    // const q = query(Electeur.collectionElecteur, limit(25));
+    // const snapshot = await getDocs(q);
     snapshot.forEach((doc) => {
       let dataElecteur = { ...Electeur.clearData, ...doc.data() };
       dataElecteur.id = doc.id;
