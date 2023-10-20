@@ -176,7 +176,7 @@ export default function Home() {
             <ConfirmationModal />
             <UserModal />
             <h1 className=' text-center mt-2' > ENREGISTREMENT DU PERSONNEL</h1>
-            <StyledHome className=' d-flex px-2 px-md-5'>
+            <StyledHome className=' d-flex px-2 p-md-5'>
                 <div className=' p-2 p-md-3 my-form'>
                     <form>
                         <div className=' d-flex flex-column gap-3'>
