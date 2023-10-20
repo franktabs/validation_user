@@ -8,9 +8,9 @@ export default function Index() {
     const connectedSelector = useAppSelector((state) => state.connectedAdmin);
 
     if (connectedSelector.value) return <>
-    <StyledConfirmationModal className='my-loader d-none'>
+        <StyledConfirmationModal className='my-loader d-none'>
             <div className="lds-ring"><div></div><div></div><div></div><div></div></div>
-    </StyledConfirmationModal>
+        </StyledConfirmationModal>
         <Home />
     </>
 

@@ -1,9 +1,9 @@
-import { DataGrid, GridColDef, GridValueGetterParams } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridColumnHeaderParams, GridFilterModel, GridValidRowModel, GridValueGetterParams } from '@mui/x-data-grid';
 import { Electeur, TypeElecteur } from '../../models/Electeur';
 import "./dataTable.css"
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAppDispatch } from '../../redux/hooks';
-import { addElecteur } from '../../redux/electeurSlice';
+import { addElecteur, loadAllDataElecteur } from '../../redux/electeurSlice';
 import $ from "jquery"
 import { UseFormReset } from 'react-hook-form';
 
@@ -49,25 +49,133 @@ type Props = {
 }
 
 export default function DataTable({ columns, rows, loading = false, error = false, reset }: Props) {
-    const dispatch = useAppDispatch()
+    const dispatch = useAppDispatch();
+
+    const [filteredValue, setFilteredValue] = useState<{field:string, value:string}>({field:"", value:""});
+
+    const handleFilterChange = (params:GridFilterModel) => {
+        const items = params.items[0];
+        const field = items.field;
+        const filterValue = items.value;
+
+        setFilteredValue({field:field, value:(filterValue+"" || "").trim()});
+    };
+
+    const handleQueryFirebase = async ()=>{
+        if(filteredValue.field && filteredValue.value.length>0){
+            let newRows = await Electeur.getFilter(filteredValue);
+            setRowsElecteur(newRows);
+            setPagePrevious(0)
+        }
+        else if(filteredValue.field && filteredValue.value.length===0){
+            let newRows = await Electeur.getAllLimit();
+            setRowsElecteur(newRows);
+            setPagePrevious(0)
+        }else{
+            let newRows = await Electeur.getAllLimit();
+            setRowsElecteur(newRows);
+            setPagePrevious(0)
+        }
+    }
+
+
+    const [sortModel, setSortModel] = useState<{ field: string, sort: "asc" | "desc" }[]>([]);
+    const [rowsElecteur, setRowsElecteur] = useState<TypeElecteur[]>([]);
+    const [pagePrevious, setPagePrevious] = useState(0);
+
+
+    useEffect(() => {
+        setRowsElecteur((state) => [...state, ...rows]);
+
+    }, [rows])
+
+    useEffect(() => {
+        dispatch(loadAllDataElecteur(rowsElecteur));
+    }, [rowsElecteur, dispatch])
+
+    const handleColumnHeaderClick = useCallback(async (params: GridColumnHeaderParams<GridValidRowModel, any, any>) => {
+        // Vérifiez si la colonne est déjà triée
+        const existingSortColumn = sortModel.find((column) => column.field === params.field);
+
+        if (existingSortColumn) {
+            // Colonne déjà triée, inversez le sens de tri
+            const updatedSortModel: { field: string, sort: "asc" | "desc" }[] = sortModel.map((column) =>
+                column.field === params.field
+                    ? { ...column, sort: column.sort === 'asc' ? 'desc' : 'asc' }
+                    : column
+            );
+
+            let newRowsElecteur = await Electeur.getByColumn(updatedSortModel[0]);
+            setRowsElecteur(newRowsElecteur);
+            setSortModel(updatedSortModel);
+            setPagePrevious(0)
+        } else {
+            // Nouvelle colonne de tri, ajoutez-la à l'état de tri
+            const newSortColumn: { field: string, sort: "asc" | "desc" } = { field: params.field, sort: 'asc' };
+
+            let newRowsElecteur = await Electeur.getByColumn(newSortColumn);
+            setRowsElecteur(newRowsElecteur);
+            setSortModel([newSortColumn]);
+            setPagePrevious(0)
+        }
+    }, [sortModel]);
+
     const handleClick = useCallback((data: TypeElecteur) => {
         dispatch(addElecteur(data));
         $(".my-modal").removeClass("d-none");
-    }, [dispatch])
+    }, [dispatch]);
+
     if (error) return <div>Impossible de Charger les données</div>
     return (
         <div style={{ height: 400, width: '100%' }}>
+            <div>
+                <button className="btn btn-secondary" onClick={handleQueryFirebase} >Actualiser le Filtre </button>
+            </div>
             <DataGrid
                 showCellVerticalBorder={true}
                 showColumnVerticalBorder={true}
                 rowSpacingType="border"
-                
-                pageSizeOptions={[100, 80, 40, 20, 10]}
+
+                // pageSizeOptions={[20, 10]}
+                initialState={{
+
+                    pagination: { paginationModel: { pageSize: 20 } },
+
+                }}
+
                 loading={loading}
-                rows={rows}
+
+                rows={rowsElecteur}
+                rowCount={Electeur.totalElecteur}
                 columns={columns}
                 editMode="cell"
                 onRowClick={(e) => { reset(Electeur.clearData); handleClick(e.row) }}
+                onColumnHeaderClick={(params, model, details) => {
+                    // console.log("voici les trois objet ", params, model, details);
+                    handleColumnHeaderClick(params)
+                }}
+                onFilterModelChange={(params, details)=>{
+                    console.log("voiici les params de filter", params, details);
+                    handleFilterChange(params);
+                }}
+                paginationModel={{ page: pagePrevious, pageSize: 20 }}
+                onPaginationModelChange={async (model, detail) => {
+                    let pageActu = model.page + 1;
+                    if ((model.page - pagePrevious > 0) && pageActu * model.pageSize > rowsElecteur.length) {
+                        let newRows = await Electeur.getNextDataLimit();
+                        console.log("newRows", newRows);
+                        setRowsElecteur((state) => [...state, ...newRows])
+                        setPagePrevious(model.page)
+                    }
+                    // else if(model.page - pagePrevious < 0){
+                    //     let newRows = await Electeur.getPreviousDataLimit();
+                    //     console.log("newRows", newRows);
+                    //     setRowsElecteur(newRows)
+                    //     setPagePrevious(model.page)
+                    // }
+                    setPagePrevious(model.page)
+                }}
+
             />
         </div>
     );

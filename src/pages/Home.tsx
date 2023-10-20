@@ -21,7 +21,7 @@ import { MyDocument } from '../components/pdf/MyDocument';
 import styled from 'styled-components';
 
 
-const BtnPdf= styled.div`
+const BtnPdf = styled.div`
     a {
         display: block;
         text-decoration: none;
@@ -33,17 +33,23 @@ const BtnPdf= styled.div`
 export default function Home() {
 
 
-    const userAuth = useAppSelector((state) => state.utilisateur)
+    const userAuth = useAppSelector((state) => state.utilisateur);
+    const allElecteurSelector = useAppSelector((state)=>state.electeur);
     const queryClient = useQueryClient()
     const loadDataElecteurSelector = useAppSelector((state) => state.loadDataElecteurs);
     const electeurSelector = useAppSelector((state) => state.electeur);
+    const [queryDataElecteur, setQueryDataElecteur] = useState<TypeElecteur[]>([])
     const dispatch = useAppDispatch();
+
+    const [allElecteur, setAllElecteur] = useState<TypeElecteur[]>([]);
 
     const queryElecteur = useQuery({
         queryKey: ["electeurs"], enabled: loadDataElecteurSelector.value, queryFn: async () => {
-            let data = await Electeur.getAll();
+            let data = await Electeur.getAllLimit();
+            console.log("first data home =>", data);
             if (data.length) {
-                dispatch(blockLoadElecteurs())
+                dispatch(blockLoadElecteurs());
+                setQueryDataElecteur(data);
                 return data
             } else {
                 throw new Error("Impossible de recuperer les données")
@@ -51,6 +57,13 @@ export default function Home() {
         }
     }
     );
+
+    const handleCliceAllElecteur = useCallback(async () => {
+        if(allElecteur.length===0){
+            let allData = await Electeur.getAllData();
+        setAllElecteur(allData)
+        }
+    }, [allElecteur])
 
 
     const { register, getValues, reset, handleSubmit, formState: { errors } } = useForm<TypeElecteur>({ defaultValues: Electeur.clearData });
@@ -62,7 +75,7 @@ export default function Home() {
             console.log("affichage de l'electeur", electeurSelector.electeur)
             reset(electeurSelector.electeur);
         }
-    }, [electeurSelector.putForm, dispatch, electeurSelector.electeur])
+    }, [electeurSelector.putForm, dispatch, electeurSelector.electeur, reset])
 
 
     console.log("ici =>", getValues())
@@ -155,13 +168,15 @@ export default function Home() {
     }, [getValues])
 
     formatDate()
+
+    console.log("render Home");
     return (
 
         <>
             <ConfirmationModal />
             <UserModal />
             <h1 className=' text-center mt-2' > ENREGISTREMENT DU PERSONNEL</h1>
-            <StyledHome className=' d-flex p-2 p-md-5'>
+            <StyledHome className=' d-flex px-2 px-md-5'>
                 <div className=' p-2 p-md-3 my-form'>
                     <form>
                         <div className=' d-flex flex-column gap-3'>
@@ -216,23 +231,26 @@ export default function Home() {
                 </div>
                 <div>
                     <p className='fs-2 text-center'>
-                        Nombre total d'électeurs enregistrés: {queryElecteur.data?.length || "aucun trouvé"}
+                        Nombre total d'électeurs enregistrés: {Electeur.totalElecteur || "aucun trouvé"}
                     </p>
                     {
                         userAuth.value.type === "admin" ?
                             <div className=' p-4 d-flex justify-content-between flex-wrap gap-3'>
                                 <button className='btn btn-primary' onClick={handlePassword} >Gestion Mots de passes</button>
-                                <BtnPdf className='btn btn-dark'>
-                                    <PDFDownloadLink document={<MyDocument nameCol={columns as any} rows={queryElecteur.data ?? []} />} fileName="tableau.pdf">
-                                        {({ blob, url, loading, error }) =>
-                                            loading ? 'Chargement du PDF...' : 'Télécharger le PDF'
-                                        }
-                                    </PDFDownloadLink>
+                                <BtnPdf className='btn btn-dark'  >
+                                   
+                                        <PDFDownloadLink document={<MyDocument nameCol={columns as any} rows={allElecteurSelector.allDataElecteur || []} />} fileName="tableau.pdf">
+                                            {({ blob, url, loading, error }) =>
+                                                loading ? 'Chargement du PDF...' : 'Télécharger le PDF'
+                                            }
+                                        </PDFDownloadLink>
+                                   
+
                                 </BtnPdf>
                             </div> : null
                     }
 
-                    <DataTable columns={columns} rows={queryElecteur.data ?? []} loading={queryElecteur.status === "loading"} error={queryElecteur.status === "error"} reset={reset} />
+                    <DataTable columns={columns} rows={queryDataElecteur ?? []} loading={queryElecteur.status === "loading"} error={queryElecteur.status === "error"} reset={reset} />
                 </div>
             </StyledHome>
         </>

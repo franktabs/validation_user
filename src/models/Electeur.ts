@@ -1,16 +1,24 @@
 import {
   CollectionReference,
+  Query,
+  QueryDocumentSnapshot,
   Timestamp,
   addDoc,
   collection,
   deleteDoc,
   doc,
+  endBefore,
+  getCountFromServer,
   getDocs,
   limit,
+  orderBy,
   query,
+  startAfter,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import { db } from "../firebase";
+
 
 export interface TypeElecteur {
   id?: string;
@@ -48,6 +56,12 @@ export class Electeur {
     valider: "NON",
   };
 
+  static totalElecteur:number = 0;
+
+  static lastVisibleDoc:QueryDocumentSnapshot<TypeElecteur>;
+  static firstVisibleDoc:QueryDocumentSnapshot<TypeElecteur>;
+  static lastQuery:Query<TypeElecteur>;
+
   constructor(public data: TypeElecteur) {}
 
   async save(): Promise<boolean> {
@@ -80,11 +94,12 @@ export class Electeur {
     
   }
 
-  static async getAll(): Promise<TypeElecteur[]> {
+  static async getAllData(): Promise<TypeElecteur[]> {
     let electeur: TypeElecteur[] = [];
-    const snapshot = await getDocs(Electeur.collectionElecteur);
-    // const q = query(Electeur.collectionElecteur, limit(25));
-    // const snapshot = await getDocs(q);
+    const queryElecteur = query(Electeur.collectionElecteur)
+    const snapshot = await getDocs(queryElecteur);
+    const snapCount  = await getCountFromServer(Electeur.collectionElecteur);
+    Electeur.totalElecteur = snapCount.data().count;
     snapshot.forEach((doc) => {
       let dataElecteur = { ...Electeur.clearData, ...doc.data() };
       dataElecteur.id = doc.id;
@@ -97,6 +112,129 @@ export class Electeur {
     });
     return electeur;
   }
+
+  static async getAllLimit(): Promise<TypeElecteur[]> {
+    let electeur: TypeElecteur[] = [];
+    const queryElecteur = query(Electeur.collectionElecteur, limit(20))
+    const snapshot = await getDocs(queryElecteur);
+    const snapCount  = await getCountFromServer(Electeur.collectionElecteur);
+    Electeur.totalElecteur = snapCount.data().count;
+    // const q = query(Electeur.collectionElecteur, limit(25));
+    // const snapshot = await getDocs(q);
+    snapshot.forEach((doc) => {
+      let dataElecteur = { ...Electeur.clearData, ...doc.data() };
+      dataElecteur.id = doc.id;
+      if (dataElecteur.date_naissance instanceof Timestamp) {
+        dataElecteur.date_naissance = dataElecteur.date_naissance
+          .toDate()
+          .toLocaleDateString();
+      }
+      electeur.push(dataElecteur);
+    });
+    Electeur.firstVisibleDoc = snapshot.docs[0];
+    Electeur.lastVisibleDoc  = snapshot.docs[snapshot.docs.length-1];
+    Electeur.lastQuery = queryElecteur ;
+    return electeur;
+  }
+
+  static async getByColumn(column:{field:string, sort:"asc"|"desc"}):Promise<TypeElecteur[]>{
+    let electeur: TypeElecteur[] = [];
+    const queryElecteur = query(Electeur.collectionElecteur, orderBy(column.field, column.sort), limit(20))
+    const snapshot = await getDocs(queryElecteur);
+    const snapCount  = await getCountFromServer(Electeur.collectionElecteur);
+    Electeur.totalElecteur = snapCount.data().count;
+    // const q = query(Electeur.collectionElecteur, limit(25));
+    // const snapshot = await getDocs(q);
+    snapshot.forEach((doc) => {
+      let dataElecteur = { ...Electeur.clearData, ...doc.data() };
+      dataElecteur.id = doc.id;
+      if (dataElecteur.date_naissance instanceof Timestamp) {
+        dataElecteur.date_naissance = dataElecteur.date_naissance
+          .toDate()
+          .toLocaleDateString();
+      }
+      electeur.push(dataElecteur);
+    });
+    Electeur.firstVisibleDoc = snapshot.docs[0];
+    Electeur.lastVisibleDoc  = snapshot.docs[snapshot.docs.length-1];
+    Electeur.lastQuery = queryElecteur ;
+    return electeur;
+  }
+
+
+  static async getNextDataLimit(){
+    let electeur: TypeElecteur[] = [];
+    const queryElecteur = query(Electeur.lastQuery, startAfter(Electeur.lastVisibleDoc), limit(20))
+    const snapshot = await getDocs(queryElecteur);
+    const snapCount  = await getCountFromServer(Electeur.collectionElecteur);
+    Electeur.totalElecteur = snapCount.data().count;
+    // const q = query(Electeur.collectionElecteur, limit(25));
+    // const snapshot = await getDocs(q);
+    snapshot.forEach((doc) => {
+      let dataElecteur = { ...Electeur.clearData, ...doc.data() };
+      dataElecteur.id = doc.id;
+      if (dataElecteur.date_naissance instanceof Timestamp) {
+        dataElecteur.date_naissance = dataElecteur.date_naissance
+          .toDate()
+          .toLocaleDateString();
+      }
+      electeur.push(dataElecteur);
+    });
+    Electeur.firstVisibleDoc = snapshot.docs[0];
+    Electeur.lastVisibleDoc  = snapshot.docs[snapshot.docs.length-1];
+    return electeur;
+  }
+
+  static async getPreviousDataLimit(){
+    let electeur: TypeElecteur[] = [];
+    const queryElecteur = query(Electeur.lastQuery, endBefore(Electeur.firstVisibleDoc), limit(20))
+    const snapshot = await getDocs(queryElecteur);
+    const snapCount  = await getCountFromServer(Electeur.collectionElecteur);
+    Electeur.totalElecteur = snapCount.data().count;
+    // const q = query(Electeur.collectionElecteur, limit(25));
+    // const snapshot = await getDocs(q);
+    snapshot.forEach((doc) => {
+      let dataElecteur = { ...Electeur.clearData, ...doc.data() };
+      dataElecteur.id = doc.id;
+      if (dataElecteur.date_naissance instanceof Timestamp) {
+        dataElecteur.date_naissance = dataElecteur.date_naissance
+          .toDate()
+          .toLocaleDateString();
+      }
+      electeur.push(dataElecteur);
+    });
+    Electeur.firstVisibleDoc = snapshot.docs[0];
+    Electeur.lastVisibleDoc  = snapshot.docs[snapshot.docs.length-1];
+    return electeur;
+  }
+
+  static async getFilter(column:{field:string, value:string}){
+    let electeur: TypeElecteur[] = [];
+    const queryElecteur = query(Electeur.lastQuery, where(column.field, ">=", column.value), limit(20))
+    const snapshot = await getDocs(queryElecteur);
+    const snapCount  = await getCountFromServer(Electeur.collectionElecteur);
+    Electeur.totalElecteur = snapCount.data().count;
+    // const q = query(Electeur.collectionElecteur, limit(25));
+    // const snapshot = await getDocs(q);
+    snapshot.forEach((doc) => {
+      let dataElecteur = { ...Electeur.clearData, ...doc.data() };
+      dataElecteur.id = doc.id;
+      if (dataElecteur.date_naissance instanceof Timestamp) {
+        dataElecteur.date_naissance = dataElecteur.date_naissance
+          .toDate()
+          .toLocaleDateString();
+      }
+      electeur.push(dataElecteur);
+    });
+    Electeur.firstVisibleDoc = snapshot.docs[0];
+    Electeur.lastVisibleDoc  = snapshot.docs[snapshot.docs.length-1];
+    Electeur.lastQuery = queryElecteur;
+    return electeur;
+    
+  }
+  
+
+  
 
   static async delete (data:TypeElecteur){
     if(data.id){

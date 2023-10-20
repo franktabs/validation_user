@@ -13,7 +13,7 @@ const size = {
 const StyledHome = styled.div`
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: stretch;
     flex-wrap: wrap;
 
     & > div:last-child{
