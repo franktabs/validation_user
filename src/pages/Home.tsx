@@ -233,6 +233,9 @@ export default function Home() {
                     <p className='fs-2 text-center'>
                         Nombre total d'électeurs enregistrés: {Electeur.totalElecteur || "aucun trouvé"}
                     </p>
+                    <p className='fs-2 text-center'>
+                        Nombre d'électeurs filtrés : {Electeur.countLastRequest || "aucun"}
+                    </p>
                     {
                         userAuth.value.type === "admin" ?
                             <div className=' p-4 d-flex justify-content-between flex-wrap gap-3'>

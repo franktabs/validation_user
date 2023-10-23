@@ -51,27 +51,30 @@ type Props = {
 export default function DataTable({ columns, rows, loading = false, error = false, reset }: Props) {
     const dispatch = useAppDispatch();
 
-    const [filteredValue, setFilteredValue] = useState<{field:string, value:string}>({field:"", value:""});
+    const [filteredValue, setFilteredValue] = useState<{ field: string, value: string, filterModel?: GridFilterModel }>({ field: "", value: "" });
 
-    const handleFilterChange = (params:GridFilterModel) => {
-        const items = params.items[0];
-        const field = items.field;
-        const filterValue = items.value;
+    const handleFilterChange = (params: GridFilterModel) => {
+        if(params.items){
 
-        setFilteredValue({field:field, value:(filterValue+"" || "").trim()});
+            const items = params.items[0];
+            const field = items.field;
+            const filterValue = items.value;
+    
+            setFilteredValue({ field: field, value: (filterValue + "" || "").trim(), filterModel: params });
+        }
     };
 
-    const handleQueryFirebase = async ()=>{
-        if(filteredValue.field && filteredValue.value.length>0){
+    const handleQueryFirebase = async () => {
+        if (filteredValue.field && filteredValue.value.length > 0) {
             let newRows = await Electeur.getFilter(filteredValue);
             setRowsElecteur(newRows);
             setPagePrevious(0)
         }
-        else if(filteredValue.field && filteredValue.value.length===0){
+        else if (filteredValue.field && filteredValue.value.length === 0) {
             let newRows = await Electeur.getAllLimit();
             setRowsElecteur(newRows);
             setPagePrevious(0)
-        }else{
+        } else {
             let newRows = await Electeur.getAllLimit();
             setRowsElecteur(newRows);
             setPagePrevious(0)
@@ -108,6 +111,15 @@ export default function DataTable({ columns, rows, loading = false, error = fals
             let newRowsElecteur = await Electeur.getByColumn(updatedSortModel[0]);
             setRowsElecteur(newRowsElecteur);
             setSortModel(updatedSortModel);
+            setFilteredValue((state)=> {
+                let filterModel = state.filterModel;
+                if(filterModel){
+                    filterModel.items[0].value = "";
+                    filterModel.items[0].field = "";
+
+                }
+                return { field: params.field, value: "", filterModel: filterModel}
+            });
             setPagePrevious(0)
         } else {
             // Nouvelle colonne de tri, ajoutez-la à l'état de tri
@@ -116,6 +128,14 @@ export default function DataTable({ columns, rows, loading = false, error = fals
             let newRowsElecteur = await Electeur.getByColumn(newSortColumn);
             setRowsElecteur(newRowsElecteur);
             setSortModel([newSortColumn]);
+            setFilteredValue((state)=> {
+                let filterModel = state.filterModel;
+                if(filterModel){
+                    filterModel.items[0].value = "";
+                    filterModel.items[0].field = "";
+                }
+                return { field: params.field, value: "", filterModel: filterModel}
+            });
             setPagePrevious(0)
         }
     }, [sortModel]);
@@ -140,13 +160,14 @@ export default function DataTable({ columns, rows, loading = false, error = fals
                 initialState={{
 
                     pagination: { paginationModel: { pageSize: 20 } },
+                    filter: { "filterModel": filteredValue.filterModel }
 
                 }}
 
                 loading={loading}
 
                 rows={rowsElecteur}
-                rowCount={Electeur.totalElecteur}
+                rowCount={Electeur.countLastRequest}
                 columns={columns}
                 editMode="cell"
                 onRowClick={(e) => { reset(Electeur.clearData); handleClick(e.row) }}
@@ -154,7 +175,7 @@ export default function DataTable({ columns, rows, loading = false, error = fals
                     // console.log("voici les trois objet ", params, model, details);
                     handleColumnHeaderClick(params)
                 }}
-                onFilterModelChange={(params, details)=>{
+                onFilterModelChange={(params, details) => {
                     console.log("voiici les params de filter", params, details);
                     handleFilterChange(params);
                 }}
